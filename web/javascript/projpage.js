@@ -67,6 +67,11 @@ ProjPage.prototype._init = function() {
 	this._selector = new ProjSelect(this._list, getElement("project-select"));
 	connect( this._selector, "onchange", bind( this._on_proj_change, this ) );
 
+	// The selection box for selecting a pyenv version to export
+	this._pyenvExportVersions = new ExportVersionList;
+	this._pyenvExportVersions._grab_list();
+	this._pyenvExportSelector = new ExportVersionSelect(this._pyenvExportVersions, getElement("pyenv-export-select"));
+
 	// Selection operations
 	this.selection_operations = new ProjOps();
 
@@ -376,7 +381,7 @@ ProjPage.prototype._exportProjectCheckResult = function(result, num_errors) {
 }
 
 ProjPage.prototype._exportProject = function() {
-	Checkout.GetInstance().checkout(team, this.project, this.flist.rev, function() {}, function(errno, errcode) {
+	Checkout.GetInstance().checkout(team, this.project, this.flist.rev, this._pyenvExportSelector.selectedVersion, function() {}, function(errno, errcode) {
 		alert("checkout-induced death: " + errcode);
 	});
 }
@@ -956,6 +961,79 @@ ProjSelect.prototype._get_default = function() {
 
 	return null;
 }
+
+function ExportVersionList() {
+	this.versions = [];
+	this.loaded = false;
+
+	// Prompt when it errors while grabbing the list
+	this._err_prompt = null;
+}
+
+ExportVersionList.prototype._grab_list = function () {
+	if ( this._err_prompt != null ) {
+		this._err_prompt.close();
+		this._err_prompt = null;
+	}
+
+	this.loaded = false;
+
+	IDE_backend_request(
+		"team/list-pyenv-versions", {'team': team}, bind( this._got_list, this ),
+		bind( function () {
+			this._err_prompt = status_button( "Error retrieving the pyenv version list", LEVEL_ERROR,
+				"retry", bind( this._grab_list, this ) );
+		}, this )
+	);
+}
+
+ExportVersionList.prototype._got_list = function( resp ) {
+	this.versions = resp["pyenv-versions"];
+	this.loaded = true;
+
+	signal( this, "onchange" );
+}
+
+// The version of pyenv export version selector
+// Arguments:
+//  - versions: The version list
+//  - elem: The DOM object for the select box.
+function ExportVersionSelect(versions, elem) {
+	this._elem = elem;
+	this._versions = versions;
+
+	this.selectedVersion = 'default';
+
+	connect( this._versions, "onchange", bind( this._on_version_change, this ) );
+	connect( this._elem, "onchange", bind( this._on_change, this ) );
+	if ( this._versions.loaded ) {
+		this._on_version_change();
+	}
+}
+
+ExportVersionSelect.prototype._on_change = function ( event ) {
+	for ( var i = 0; i < event._src.children.length; i++ ) {
+		optionElement = event._src.children[i];
+		if ( optionElement.selected ) {
+			this.selectedVersion = optionElement.value;
+		}
+	}
+}
+
+ExportVersionSelect.prototype._on_version_change = function () {
+	for ( var i = 0; i < this._elem.children.length; i ++ ) {
+		child = this._elem.children[i];
+		this._elem.removeChild( child );
+	}
+
+	for ( var commitHash in this._versions.versions ) {
+		var optionElem = document.createElement( 'option' );
+		optionElem.setAttribute( 'value', commitHash );
+		optionElem.innerHTML = this._versions.versions[commitHash];
+		this._elem.appendChild( optionElem );
+	}
+}
+
 
 //handles all 'selection operations' in sidebar of project page
 function ProjOps() {

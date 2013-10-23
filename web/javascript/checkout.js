@@ -36,7 +36,7 @@ Checkout.prototype._download = function(successCallback, errorCallback, nodes) {
 /* Initiates a checkout.
  * We also munge the successCallback to record the number of checkouts the user has done.
  */
-Checkout.prototype.checkout = function(team, project, rev, successCallback, errorCallback) {
+Checkout.prototype.checkout = function(team, project, rev, pyenvVersion, successCallback, errorCallback) {
 	var setting = 'export.number';
 	var record_export = function() {
 		var exports = user.get_setting(setting);
@@ -49,7 +49,7 @@ Checkout.prototype.checkout = function(team, project, rev, successCallback, erro
 		successCallback();
 	}
 	// get URL
-	IDE_backend_request("proj/co", {team: team, project: project, rev: rev},
+	IDE_backend_request("proj/co", {team: team, project: project, rev: rev, pyenvVersion: pyenvVersion},
 	                    bind(this._download, this, record_export, errorCallback),
 	                    errorCallback);
 }

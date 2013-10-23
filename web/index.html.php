@@ -214,6 +214,7 @@
 
 				<div id="proj-options">
 					<div>Project:<select id="project-select"><option>loading...</option></select></div>
+					<div>Pyenv version to export:<select id="pyenv-export-select"><option>loading...</option></select></div>
 					<hr />
 					<button id="new-project">New Project</button>
 					<button id="export-project" title="Create a zip file for the robot that contains your code. (Ctrl+E)">Export Project</button>

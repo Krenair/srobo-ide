@@ -12,6 +12,21 @@ class TeamModule extends Module
 		$this->installCommand('status-get', array($this, 'getStatus'));
 		$this->installCommand('status-put', array($this, 'putStatus'));
 		$this->installCommand('status-put-image', array($this, 'putStatusImage'));
+		$this->installCommand('list-pyenv-versions', array($this, 'listPyenvVersions'));
+	}
+
+	public function listPyenvVersions()
+	{
+		$versionData = array();
+		foreach ( explode(',', Configuration::getInstance()->getConfig('lib_robot.team')[self::getRequestTeamID()]) as $commitHash ) {
+			if (Configuration::getInstance()->getConfig('lib_robot_hashname.' . $commitHash)) {
+				$versionData[Configuration::getInstance()->getConfig('lib_robot_hashname.' . $commitHash)] = $commitHash;
+			} else {
+				$versionData[$commitHash] = $commitHash;
+			}
+		}
+		Output::getInstance()->setOutput('pyenv-versions', $versionData);
+		return true;
 	}
 
 	/**

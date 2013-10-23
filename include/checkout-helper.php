@@ -8,10 +8,11 @@ class CheckoutHelper
 	private $repo;
 	private $team;
 
-	public function __construct(GitRepository $repo, $team)
+	public function __construct(GitRepository $repo, $team, $pyenvVersion)
 	{
 		$this->repo = $repo;
 		$this->team = $team;
+		$this->pyenvVersion = $pyenvVersion;
 	}
 
 	/**
@@ -36,8 +37,7 @@ class CheckoutHelper
 		$projName = $this->repo->repoName();
 		file_put_contents($userTmpDir.'/.user-rev', $projName.' @ '.$revision);
 
-		$libRobotHash = self::getLibRobotRevisionFor($this->team);
-		$zipBuilder = self::getArchiveBuilder($libRobotHash, $tmpDir);
+		$zipBuilder = self::getArchiveBuilder($this->pyenvVersion, $tmpDir);
 
 		self::createZip($zipBuilder, $userTmpDir, $destFile);
 
@@ -48,19 +48,6 @@ class CheckoutHelper
 		// remove our temporary folder so that we don't fill up /tmp
 		delete_recursive($tmpDir);
 	}
-
-	/**
-	 * Gets the revision of libRobot that the team in question should be
-	 * served inside their zip.
-	 * @param team: The team to find the revision for.
-	 * @returns: A hash, or null if the default should be used.
-	 */
-	public static function getLibRobotRevisionFor($team)
-	{
-		$teams = Configuration::getInstance()->getConfig('lib_robot.team');
-		return @$teams[$team];
-	}
-
 
 	/**
 	 * Utility function to unzip an arbitrary file into its current folder,

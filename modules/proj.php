@@ -229,7 +229,12 @@ class ProjModule extends Module
 			return false;
 		}
 
-		$helper = new CheckoutHelper($repo, $this->team);
+		$pyenvVersion = $input->getInput('pyenvVersion');
+		if (!in_array($pyenvVersion, explode(',', Configuration::getInstance()->getConfig('lib_robot.team')[$this->team]))) {
+			$pyenvVersion = 'HEAD';
+		}
+
+		$helper = new CheckoutHelper($repo, $this->team, $pyenvVersion);
 		$helper->buildZipFile("$servePath/robot.zip", $hash);
 
 		$output->setOutput('url', "$serveUrl/robot.zip");
